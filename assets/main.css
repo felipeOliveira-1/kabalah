@@ -1778,6 +1778,7 @@ h1.style3 span.p:nth-child(n + 2), h2.style3 span.p:nth-child(n + 2), h3.style3 
 }
 
 .buttons.style2 {
+	justify-content: center;
 	gap: 0.75rem;
 	flex-direction: row;
 	flex-wrap: wrap;
