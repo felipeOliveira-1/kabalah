@@ -2107,14 +2107,14 @@
 					{
 						src: 'assets/images/container01-7e3780a2.jpg',
 						position: 'center',
-						motion: 'up',
+						motion: 'down',
 						speed: 2,
 						caption: 'Untitled',
 					},
 					{
 						src: 'assets/images/container01-02b36bec.jpg',
 						position: 'center',
-						motion: 'none',
+						motion: 'up',
 						speed: 2,
 						caption: 'Untitled',
 					},

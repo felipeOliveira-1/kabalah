@@ -1786,10 +1786,10 @@ h1.style3 span.p:nth-child(n + 2), h2.style3 span.p:nth-child(n + 2), h3.style3 
 
 .buttons.style2 li a {
 	display: inline-flex;
-	width: 8rem;
-	height: 3.5rem;
-	line-height: 3.5rem;
-	padding: 0 0.5rem;
+	width: auto;
+	height: 3.375rem;
+	line-height: 3.375rem;
+	padding: 0 1.6875rem;
 	vertical-align: middle;
 	font-family: 'Inter', sans-serif;
 	font-size: 1em;
@@ -3513,16 +3513,6 @@ form.style1 .file[data-filename=""]:before {
 	
 	.container.style7 > .wrapper > .inner {
 		--spacing: 1.3125rem;
-	}
-	
-	.buttons.style2 {
-		flex-direction: column;
-		flex-wrap: nowrap;
-	}
-	
-	.buttons.style2 li a {
-		max-width: 32rem;
-		width: 100%;
 	}
 	
 	form.style1 .actions button {
