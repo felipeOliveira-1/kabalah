@@ -702,14 +702,45 @@
 								if (location.hash == '#home')
 									history.replaceState(null, null, '#');
 	
-							// Get options.
-								name = (section ? section.id.replace(/-section$/, '') : null);
-								disableAutoScroll = name ? ((name in sections) && ('disableAutoScroll' in sections[name]) && sections[name].disableAutoScroll) : false;
+						// Get options.
+							name = (section ? section.id.replace(/-section$/, '') : null);
+							hideHeader = name ? ((name in sections) && ('hideHeader' in sections[name]) && sections[name].hideHeader) : false;
+							hideFooter = name ? ((name in sections) && ('hideFooter' in sections[name]) && sections[name].hideFooter) : false;
+							disableAutoScroll = name ? ((name in sections) && ('disableAutoScroll' in sections[name]) && sections[name].disableAutoScroll) : false;
 	
-							// Deactivate current section.
-								currentSection = $('section:not(.inactive)');
+						// Deactivate current section.
+	
+							// Hide header and/or footer (if necessary).
+	
+								// Header.
+									if (header && hideHeader) {
+	
+										header.classList.add('hidden');
+	
+										setTimeout(function() {
+											header.style.display = 'none';
+										}, 250);
+	
+									}
+	
+								// Footer.
+									if (footer && hideFooter) {
+	
+										footer.classList.add('hidden');
+	
+										setTimeout(function() {
+											footer.style.display = 'none';
+										}, 250);
+	
+									}
+	
+							// Deactivate.
+								currentSection = $('#main > .inner > section:not(.inactive)');
 	
 								if (currentSection) {
+	
+									// Get current height.
+										currentSectionHeight = currentSection.offsetHeight;
 	
 									// Deactivate.
 										currentSection.classList.add('inactive');
@@ -717,50 +748,112 @@
 									// Unload elements.
 										unloadElements(currentSection);
 	
-									// Hide.
-										setTimeout(function() {
-											currentSection.style.display = 'none';
-											currentSection.classList.remove('active');
-										}, 250);
+										// Hide.
+											setTimeout(function() {
+												currentSection.style.display = 'none';
+												currentSection.classList.remove('active');
+											}, 250);
 	
-								}
+									}
 	
 							// Activate target section.
 								setTimeout(function() {
 	
-									// Show.
-										section.style.display = '';
+									// Show header and/or footer (if necessary).
 	
-									// Trigger 'resize' event.
-										trigger('resize');
+										// Header.
+											if (header && !hideHeader) {
 	
-									// Scroll to top (if not disabled for this section).
-										if (!disableAutoScroll)
-											scrollToElement(null, 'instant');
+												header.style.display = '';
 	
-									// Delay.
-										setTimeout(function() {
-	
-											// Activate.
-												section.classList.remove('inactive');
-												section.classList.add('active');
-	
-											// Delay.
 												setTimeout(function() {
+													header.classList.remove('hidden');
+												}, 0);
 	
-													// Load elements.
-														loadElements(section);
+											}
 	
-												 	// Scroll to scroll point (if applicable).
-												 		if (scrollPoint)
-															scrollToElement(scrollPoint, 'instant');
+										// Footer.
+											if (footer && !hideFooter) {
 	
-													// Unlock.
-														locked = false;
+												footer.style.display = '';
 	
-												}, 500);
+												setTimeout(function() {
+													footer.classList.remove('hidden');
+												}, 0);
 	
-										}, 75);
+											}
+	
+									// Activate.
+	
+										// Show.
+											section.style.display = '';
+	
+										// Trigger 'resize' event.
+											trigger('resize');
+	
+										// Scroll to top (if not disabled for this section).
+											if (!disableAutoScroll)
+												scrollToElement(null, 'instant');
+	
+										// Get target height.
+											sectionHeight = section.offsetHeight;
+	
+										// Set target heights.
+											if (sectionHeight > currentSectionHeight) {
+	
+												section.style.maxHeight = currentSectionHeight + 'px';
+												section.style.minHeight = '0';
+	
+											}
+											else {
+	
+												section.style.maxHeight = '';
+												section.style.minHeight = currentSectionHeight + 'px';
+	
+											}
+	
+										// Delay.
+											setTimeout(function() {
+	
+												// Activate.
+													section.classList.remove('inactive');
+													section.classList.add('active');
+	
+												// Temporarily restore target heights.
+													section.style.minHeight = sectionHeight + 'px';
+													section.style.maxHeight = sectionHeight + 'px';
+	
+												// Delay.
+													setTimeout(function() {
+	
+														// Turn off transitions.
+															section.style.transition = 'none';
+	
+														// Clear target heights.
+															section.style.minHeight = '';
+															section.style.maxHeight = '';
+	
+														// Load elements.
+															loadElements(section);
+	
+													 	// Scroll to scroll point (if applicable).
+													 		if (scrollPoint)
+																scrollToElement(scrollPoint, 'instant');
+	
+														// Delay.
+															setTimeout(function() {
+	
+																// Turn on transitions.
+																	section.style.transition = '';
+	
+																// Unlock.
+																	locked = false;
+	
+															}, 75);
+	
+													}, 500 + 250);
+	
+											}, 75);
 	
 								}, 250);
 	
@@ -1266,866 +1359,57 @@
 	
 		})();
 	
-	// "On Visible" animation.
-		var onvisible = {
-	
-			/**
-			 * Effects.
-			 * @var {object}
-			 */
-			effects: {
-				'blur-in': {
-					transition: function (speed, delay) {
-						return	'opacity ' + speed + 's ease' + (delay ? ' ' + delay + 's' : '') + ', ' +
-								'filter ' + speed + 's ease' + (delay ? ' ' + delay + 's' : '');
-					},
-					rewind: function(intensity) {
-						this.style.opacity = 0;
-						this.style.filter = 'blur(' + (0.25 * intensity) + 'rem)';
-					},
-					play: function() {
-						this.style.opacity = 1;
-						this.style.filter = 'none';
-					},
-				},
-				'zoom-in': {
-					transition: function (speed, delay) {
-						return	'opacity ' + speed + 's ease' + (delay ? ' ' + delay + 's' : '') + ', ' +
-								'transform ' + speed + 's ease' + (delay ? ' ' + delay + 's' : '');
-					},
-					rewind: function(intensity, alt) {
-						this.style.opacity = 0;
-						this.style.transform = 'scale(' + (1 - ((alt ? 0.25 : 0.05) * intensity)) + ')';
-					},
-					play: function() {
-						this.style.opacity = 1;
-						this.style.transform = 'none';
-					},
-				},
-				'zoom-out': {
-					transition: function (speed, delay) {
-						return	'opacity ' + speed + 's ease' + (delay ? ' ' + delay + 's' : '') + ', ' +
-								'transform ' + speed + 's ease' + (delay ? ' ' + delay + 's' : '');
-					},
-					rewind: function(intensity, alt) {
-						this.style.opacity = 0;
-						this.style.transform = 'scale(' + (1 + ((alt ? 0.25 : 0.05) * intensity)) + ')';
-					},
-					play: function() {
-						this.style.opacity = 1;
-						this.style.transform = 'none';
-					},
-				},
-				'slide-left': {
-					transition: function (speed, delay) {
-						return 'transform ' + speed + 's ease' + (delay ? ' ' + delay + 's' : '');
-					},
-					rewind: function() {
-						this.style.transform = 'translateX(100vw)';
-					},
-					play: function() {
-						this.style.transform = 'none';
-					},
-				},
-				'slide-right': {
-					transition: function (speed, delay) {
-						return 'transform ' + speed + 's ease' + (delay ? ' ' + delay + 's' : '');
-					},
-					rewind: function() {
-						this.style.transform = 'translateX(-100vw)';
-					},
-					play: function() {
-						this.style.transform = 'none';
-					},
-				},
-				'flip-forward': {
-					transition: function (speed, delay) {
-						return	'opacity ' + speed + 's ease' + (delay ? ' ' + delay + 's' : '') + ', ' +
-								'transform ' + speed + 's ease' + (delay ? ' ' + delay + 's' : '');
-					},
-					rewind: function(intensity, alt) {
-						this.style.opacity = 0;
-						this.style.transformOrigin = '50% 50%';
-						this.style.transform = 'perspective(1000px) rotateX(' + ((alt ? 45 : 15) * intensity) + 'deg)';
-					},
-					play: function() {
-						this.style.opacity = 1;
-						this.style.transform = 'none';
-					},
-				},
-				'flip-backward': {
-					transition: function (speed, delay) {
-						return	'opacity ' + speed + 's ease' + (delay ? ' ' + delay + 's' : '') + ', ' +
-								'transform ' + speed + 's ease' + (delay ? ' ' + delay + 's' : '');
-					},
-					rewind: function(intensity, alt) {
-						this.style.opacity = 0;
-						this.style.transformOrigin = '50% 50%';
-						this.style.transform = 'perspective(1000px) rotateX(' + ((alt ? -45 : -15) * intensity) + 'deg)';
-					},
-					play: function() {
-						this.style.opacity = 1;
-						this.style.transform = 'none';
-					},
-				},
-				'flip-left': {
-					transition: function (speed, delay) {
-						return	'opacity ' + speed + 's ease' + (delay ? ' ' + delay + 's' : '') + ', ' +
-								'transform ' + speed + 's ease' + (delay ? ' ' + delay + 's' : '');
-					},
-					rewind: function(intensity, alt) {
-						this.style.opacity = 0;
-						this.style.transformOrigin = '50% 50%';
-						this.style.transform = 'perspective(1000px) rotateY(' + ((alt ? 45 : 15) * intensity) + 'deg)';
-					},
-					play: function() {
-						this.style.opacity = 1;
-						this.style.transform = 'none';
-					},
-				},
-				'flip-right': {
-					transition: function (speed, delay) {
-						return	'opacity ' + speed + 's ease' + (delay ? ' ' + delay + 's' : '') + ', ' +
-								'transform ' + speed + 's ease' + (delay ? ' ' + delay + 's' : '');
-					},
-					rewind: function(intensity, alt) {
-						this.style.opacity = 0;
-						this.style.transformOrigin = '50% 50%';
-						this.style.transform = 'perspective(1000px) rotateY(' + ((alt ? -45 : -15) * intensity) + 'deg)';
-					},
-					play: function() {
-						this.style.opacity = 1;
-						this.style.transform = 'none';
-					},
-				},
-				'tilt-left': {
-					transition: function (speed, delay) {
-						return	'opacity ' + speed + 's ease' + (delay ? ' ' + delay + 's' : '') + ', ' +
-								'transform ' + speed + 's ease' + (delay ? ' ' + delay + 's' : '');
-					},
-					rewind: function(intensity, alt) {
-						this.style.opacity = 0;
-						this.style.transform = 'rotate(' + ((alt ? 45 : 5) * intensity) + 'deg)';
-					},
-					play: function() {
-						this.style.opacity = 1;
-						this.style.transform = 'none';
-					},
-				},
-				'tilt-right': {
-					transition: function (speed, delay) {
-						return	'opacity ' + speed + 's ease' + (delay ? ' ' + delay + 's' : '') + ', ' +
-								'transform ' + speed + 's ease' + (delay ? ' ' + delay + 's' : '');
-					},
-					rewind: function(intensity, alt) {
-						this.style.opacity = 0;
-						this.style.transform = 'rotate(' + ((alt ? -45 : -5) * intensity) + 'deg)';
-					},
-					play: function() {
-						this.style.opacity = 1;
-						this.style.transform = 'none';
-					},
-				},
-				'fade-right': {
-					transition: function (speed, delay) {
-						return	'opacity ' + speed + 's ease' + (delay ? ' ' + delay + 's' : '') + ', ' +
-								'transform ' + speed + 's ease' + (delay ? ' ' + delay + 's' : '');
-					},
-					rewind: function(intensity) {
-						this.style.opacity = 0;
-						this.style.transform = 'translateX(' + (-1.5 * intensity) + 'rem)';
-					},
-					play: function() {
-						this.style.opacity = 1;
-						this.style.transform = 'none';
-					},
-				},
-				'fade-left': {
-					transition: function (speed, delay) {
-						return	'opacity ' + speed + 's ease' + (delay ? ' ' + delay + 's' : '') + ', ' +
-								'transform ' + speed + 's ease' + (delay ? ' ' + delay + 's' : '');
-					},
-					rewind: function(intensity) {
-						this.style.opacity = 0;
-						this.style.transform = 'translateX(' + (1.5 * intensity) + 'rem)';
-					},
-					play: function() {
-						this.style.opacity = 1;
-						this.style.transform = 'none';
-					},
-				},
-				'fade-down': {
-					transition: function (speed, delay) {
-						return	'opacity ' + speed + 's ease' + (delay ? ' ' + delay + 's' : '') + ', ' +
-								'transform ' + speed + 's ease' + (delay ? ' ' + delay + 's' : '');
-					},
-					rewind: function(intensity) {
-						this.style.opacity = 0;
-						this.style.transform = 'translateY(' + (-1.5 * intensity) + 'rem)';
-					},
-					play: function() {
-						this.style.opacity = 1;
-						this.style.transform = 'none';
-					},
-				},
-				'fade-up': {
-					transition: function (speed, delay) {
-						return	'opacity ' + speed + 's ease' + (delay ? ' ' + delay + 's' : '') + ', ' +
-								'transform ' + speed + 's ease' + (delay ? ' ' + delay + 's' : '');
-					},
-					rewind: function(intensity) {
-						this.style.opacity = 0;
-						this.style.transform = 'translateY(' + (1.5 * intensity) + 'rem)';
-					},
-					play: function() {
-						this.style.opacity = 1;
-						this.style.transform = 'none';
-					},
-				},
-				'fade-in': {
-					transition: function (speed, delay) {
-						return 'opacity ' + speed + 's ease' + (delay ? ' ' + delay + 's' : '');
-					},
-					rewind: function() {
-						this.style.opacity = 0;
-					},
-					play: function() {
-						this.style.opacity = 1;
-					},
-				},
-				'fade-in-background': {
-					custom: true,
-					transition: function (speed, delay) {
-	
-						this.style.setProperty('--onvisible-speed', speed + 's');
-	
-						if (delay)
-							this.style.setProperty('--onvisible-delay', delay + 's');
-	
-					},
-					rewind: function() {
-						this.style.removeProperty('--onvisible-background-color');
-					},
-					play: function() {
-						this.style.setProperty('--onvisible-background-color', 'rgba(0,0,0,0.001)');
-					},
-				},
-				'zoom-in-image': {
-					target: 'img',
-					transition: function (speed, delay) {
-						return 'transform ' + speed + 's ease' + (delay ? ' ' + delay + 's' : '');
-					},
-					rewind: function() {
-						this.style.transform = 'scale(1)';
-					},
-					play: function(intensity) {
-						this.style.transform = 'scale(' + (1 + (0.1 * intensity)) + ')';
-					},
-				},
-				'zoom-out-image': {
-					target: 'img',
-					transition: function (speed, delay) {
-						return 'transform ' + speed + 's ease' + (delay ? ' ' + delay + 's' : '');
-					},
-					rewind: function(intensity) {
-						this.style.transform = 'scale(' + (1 + (0.1 * intensity)) + ')';
-					},
-					play: function() {
-						this.style.transform = 'none';
-					},
-				},
-				'focus-image': {
-					target: 'img',
-					transition: function (speed, delay) {
-						return	'transform ' + speed + 's ease' + (delay ? ' ' + delay + 's' : '') + ', ' +
-								'filter ' + speed + 's ease' + (delay ? ' ' + delay + 's' : '');
-					},
-					rewind: function(intensity) {
-						this.style.transform = 'scale(' + (1 + (0.05 * intensity)) + ')';
-						this.style.filter = 'blur(' + (0.25 * intensity) + 'rem)';
-					},
-					play: function(intensity) {
-						this.style.transform = 'none';
-						this.style.filter = 'none';
-					},
-				},
-			},
-	
-			/**
-			 * Adds one or more animatable elements.
-			 * @param {string} selector Selector.
-			 * @param {object} settings Settings.
-			 */
-			add: function(selector, settings) {
-	
-				var style = settings.style in this.effects ? settings.style : 'fade',
-					speed = parseInt('speed' in settings ? settings.speed : 1000) / 1000,
-					intensity = ((parseInt('intensity' in settings ? settings.intensity : 5) / 10) * 1.75) + 0.25,
-					delay = parseInt('delay' in settings ? settings.delay : 0) / 1000,
-					offset = parseInt('offset' in settings ? settings.offset : 0),
-					mode = parseInt('mode' in settings ? settings.mode : 3),
-					replay = 'replay' in settings ? settings.replay : false,
-					stagger = 'stagger' in settings ? (parseInt(settings.stagger) / 1000) : false,
-					state = 'state' in settings ? settings.state : null,
-					effect = this.effects[style];
-	
-				// Step through selected elements.
-					$$(selector).forEach(function(e) {
-	
-						var	children = (stagger !== false) ? e.querySelectorAll(':scope > li, :scope ul > li') : null,
-							enter = function(staggerDelay=0) {
-	
-								var	_this = this,
-									transitionOrig;
-	
-								// Target provided? Use it instead of element.
-									if (effect.target)
-										_this = this.querySelector(effect.target);
-	
-								// Not a custom effect?
-									if (!effect.custom) {
-	
-										// Save original transition.
-											transitionOrig = _this.style.transition;
-	
-										// Apply temporary styles.
-											_this.style.setProperty('backface-visibility', 'hidden');
-	
-										// Apply transition.
-											_this.style.transition = effect.transition(speed, delay + staggerDelay);
-	
-									}
-	
-								// Otherwise, call custom transition handler.
-									else
-										effect.transition.apply(_this, [speed, delay + staggerDelay]);
-	
-								// Play.
-									effect.play.apply(_this, [intensity, !!children]);
-	
-								// Not a custom effect?
-									if (!effect.custom)
-										setTimeout(function() {
-	
-											// Remove temporary styles.
-												_this.style.removeProperty('backface-visibility');
-	
-											// Restore original transition.
-												_this.style.transition = transitionOrig;
-	
-										}, (speed + delay + staggerDelay) * 1000 * 2);
-	
-							},
-							leave = function() {
-	
-								var	_this = this,
-									transitionOrig;
-	
-								// Target provided? Use it instead of element.
-									if (effect.target)
-										_this = this.querySelector(effect.target);
-	
-								// Not a custom effect?
-									if (!effect.custom) {
-	
-										// Save original transition.
-											transitionOrig = _this.style.transition;
-	
-										// Apply temporary styles.
-											_this.style.setProperty('backface-visibility', 'hidden');
-	
-										// Apply transition.
-											_this.style.transition = effect.transition(speed);
-	
-									}
-	
-								// Otherwise, call custom transition handler.
-									else
-										effect.transition.apply(_this, [speed]);
-	
-								// Rewind.
-									effect.rewind.apply(_this, [intensity, !!children]);
-	
-								// Not a custom effect?
-									if (!effect.custom)
-										setTimeout(function() {
-	
-											// Remove temporary styles.
-												_this.style.removeProperty('backface-visibility');
-	
-											// Restore original transition.
-												_this.style.transition = transitionOrig;
-	
-										}, speed * 1000 * 2);
-	
-							},
-							targetElement, triggerElement;
-	
-						// Initial rewind.
-	
-							// Determine target element.
-								if (effect.target)
-									targetElement = e.querySelector(effect.target);
-								else
-									targetElement = e;
-	
-							// Children? Rewind each individually.
-								if (children)
-									children.forEach(function(targetElement) {
-										effect.rewind.apply(targetElement, [intensity, true]);
-									});
-	
-							// Otherwise. just rewind element.
-								else
-									effect.rewind.apply(targetElement, [intensity]);
-	
-						// Determine trigger element.
-							triggerElement = e;
-	
-							// Has a parent?
-								if (e.parentNode) {
-	
-									// Parent is an onvisible trigger? Use it.
-										if (e.parentNode.dataset.onvisibleTrigger)
-											triggerElement = e.parentNode;
-	
-									// Otherwise, has a grandparent?
-										else if (e.parentNode.parentNode) {
-	
-											// Grandparent is an onvisible trigger? Use it.
-												if (e.parentNode.parentNode.dataset.onvisibleTrigger)
-													triggerElement = e.parentNode.parentNode;
-	
-										}
-	
-								}
-	
-						// Add scroll event.
-							scrollEvents.add({
-								element: e,
-								triggerElement: triggerElement,
-								offset: offset,
-								mode: mode,
-								initialState: state,
-								enter: children ? function() {
-	
-									var staggerDelay = 0;
-	
-									// Step through children.
-										children.forEach(function(e) {
-	
-											// Apply enter handler.
-												enter.apply(e, [staggerDelay]);
-	
-											// Increment stagger delay.
-												staggerDelay += stagger;
-	
-										});
-	
-								} : enter,
-								leave: (replay ? (children ? function() {
-	
-									// Step through children.
-										children.forEach(function(e) {
-	
-											// Apply leave handler.
-												leave.apply(e);
-	
-										});
-	
-								} : leave) : null),
-							});
-	
-					});
-	
-				},
-	
-		};
-	
-	// Slideshow backgrounds.
-	
-		/**
-		 * Slideshow background.
-		 * @param {string} id ID.
-		 * @param {object} settings Settings.
-		 */
-		function slideshowBackground(id, settings) {
-	
-			var _this = this;
-	
-			// Settings.
-				if (!('images' in settings)
-				||	!('target' in settings))
-					return;
-	
-				this.id = id;
-				this.wait = ('wait' in settings ? settings.wait : 0);
-				this.defer = ('defer' in settings ? settings.defer : false);
-				this.transition = ('transition' in settings ? settings.transition : { style: 'crossfade', speed: 1000, delay: 3000 });
-				this.images = settings.images;
-	
-			// Properties.
-				this.preload = true;
-				this.$target = $(settings.target);
-				this.$wrapper = null;
-				this.pos = 0;
-				this.lastPos = 0;
-				this.$slides = [];
-				this.img = document.createElement('img');
-				this.preloadTimeout = null;
-	
-			// Adjust transition delay.
-				switch (this.transition.style) {
-	
-					case 'crossfade':
-						this.transition.delay = Math.max(this.transition.delay, this.transition.speed * 2);
-						break;
-	
-	
-					case 'fade':
-						this.transition.delay = Math.max(this.transition.delay, this.transition.speed * 3);
-						break;
-	
-					case 'instant':
-					default:
-						break;
-	
-				}
-	
-			// Defer?
-				if (this.defer) {
-	
-					// Add to scroll events.
-						scrollEvents.add({
-							element: this.$target,
-							enter: function() {
-								_this.preinit();
-							}
-						});
-	
-				}
-	
-			// Otherwise ...
-				else {
-	
-					// Preinit immediately.
-						this.preinit();
-	
-				}
-	
-		};
-	
-			/**
-			 * Gets the speed class name for a given speed.
-			 * @param {int} speed Speed.
-			 * @return {string} Speed class name.
-			 */
-			slideshowBackground.prototype.speedClassName = function(speed) {
-	
-				switch (speed) {
-	
-					case 1:
-						return 'slow';
-	
-					default:
-					case 2:
-						return 'normal';
-	
-					case 3:
-						return 'fast';
-	
-				}
-	
-			};
-	
-			/**
-			 * Pre-initializes the slideshow background.
-			 */
-			slideshowBackground.prototype.preinit = function() {
-	
-				var _this = this;
-	
-				// Preload?
-					if (this.preload) {
-	
-						// Mark as loading (after delay).
-							this.preloadTimeout = setTimeout(function() {
-								_this.$target.classList.add('is-loading');
-							}, this.transition.speed);
-	
-						// Init after a delay (to prevent load events from holding up main load event).
-							setTimeout(function() {
-								_this.init();
-							}, 0);
-	
-					}
-	
-				// Otherwise ...
-					else {
-	
-						// Init immediately.
-							this.init();
-	
-					}
-	
-			};
-	
-			/**
-			 * Initializes the slideshow background.
-			 */
-			slideshowBackground.prototype.init = function() {
-	
-				var	_this = this,
-					loaded = 0,
-					$slide, intervalId, i;
-	
-				// Apply classes.
-					this.$target.classList.add('slideshow-background');
-					this.$target.classList.add(this.transition.style);
-	
-				// Create slides.
-					for (i=0; i < this.images.length; i++) {
-	
-						// Preload?
-							if (this.preload) {
-	
-								// Create img.
-									this.$img = document.createElement('img');
-										this.$img.src = this.images[i].src;
-										this.$img.addEventListener('load', function(event) {
-	
-											// Increment loaded count.
-												loaded++;
-	
-										});
-	
-							}
-	
-						// Create slide.
-							$slide = document.createElement('div');
-								$slide.style.backgroundImage = 'url(\'' + this.images[i].src + '\')';
-								$slide.style.backgroundPosition = this.images[i].position;
-								$slide.setAttribute('role', 'img');
-								$slide.setAttribute('aria-label', this.images[i].caption);
-								this.$target.appendChild($slide);
-	
-							// Apply motion classes (if applicable).
-								if (this.images[i].motion != 'none') {
-	
-									$slide.classList.add(this.images[i].motion);
-									$slide.classList.add(this.speedClassName(this.images[i].speed));
-	
-								}
-	
-						// Add to array.
-							this.$slides.push($slide);
-	
-					}
-	
-				// Preload?
-					if (this.preload)
-						intervalId = setInterval(function() {
-	
-							// All images loaded?
-								if (loaded >= _this.images.length) {
-	
-									// Stop checking.
-										clearInterval(intervalId);
-	
-									// Clear loading.
-										clearTimeout(_this.preloadTimeout);
-										_this.$target.classList.remove('is-loading');
-	
-									// Start.
-										_this.start();
-	
-								}
-	
-						}, 250);
-	
-				// Otherwise ...
-					else {
-	
-						// Start.
-							this.start();
-	
-					}
-	
-			};
-	
-			/**
-			 * Starts the slideshow.
-			 */
-			slideshowBackground.prototype.start = function() {
-	
-				var _this = this;
-	
-				// Prepare initial slide.
-					this.$slides[_this.pos].classList.add('visible');
-					this.$slides[_this.pos].classList.add('top');
-					this.$slides[_this.pos].classList.add('initial');
-					this.$slides[_this.pos].classList.add('is-playing');
-	
-				// Single slide? Bail.
-					if (this.$slides.length == 1)
-						return;
-	
-				// Wait (if needed).
-					setTimeout(function() {
-	
-						// Begin main loop.
-							setInterval(function() {
-	
-								_this.lastPos = _this.pos;
-								_this.pos = _this.pos + 1;
-	
-								// Wrap to beginning if necessary.
-									if (_this.pos >= _this.$slides.length)
-										_this.pos = 0;
-	
-								// Style.
-									switch (_this.transition.style) {
-	
-										case 'instant':
-	
-											// Swap top slides.
-												_this.$slides[_this.lastPos].classList.remove('top');
-												_this.$slides[_this.pos].classList.add('top');
-	
-											// Show current slide.
-												_this.$slides[_this.pos].classList.add('visible');
-	
-											// Start playing current slide.
-												_this.$slides[_this.pos].classList.add('is-playing');
-	
-											// Hide last slide.
-												_this.$slides[_this.lastPos].classList.remove('visible');
-												_this.$slides[_this.lastPos].classList.remove('initial');
-	
-											// Stop playing last slide.
-												_this.$slides[_this.lastPos].classList.remove('is-playing');
-	
-											break;
-	
-										case 'crossfade':
-	
-											// Swap top slides.
-												_this.$slides[_this.lastPos].classList.remove('top');
-												_this.$slides[_this.pos].classList.add('top');
-	
-											// Show current slide.
-												_this.$slides[_this.pos].classList.add('visible');
-	
-											// Start playing current slide.
-												_this.$slides[_this.pos].classList.add('is-playing');
-	
-											// Wait for fade-in to finish.
-												setTimeout(function() {
-	
-													// Hide last slide.
-														_this.$slides[_this.lastPos].classList.remove('visible');
-														_this.$slides[_this.lastPos].classList.remove('initial');
-	
-													// Stop playing last slide.
-														_this.$slides[_this.lastPos].classList.remove('is-playing');
-	
-												}, _this.transition.speed);
-	
-											break;
-	
-										case 'fade':
-	
-											// Hide last slide.
-												_this.$slides[_this.lastPos].classList.remove('visible');
-	
-											// Wait for fade-out to finish.
-												setTimeout(function() {
-	
-													// Stop playing last slide.
-														_this.$slides[_this.lastPos].classList.remove('is-playing');
-	
-													// Swap top slides.
-														_this.$slides[_this.lastPos].classList.remove('top');
-														_this.$slides[_this.pos].classList.add('top');
-	
-													// Start playing current slide.
-														_this.$slides[_this.pos].classList.add('is-playing');
-	
-													// Show current slide.
-														_this.$slides[_this.pos].classList.add('visible');
-	
-												}, _this.transition.speed);
-	
-											break;
-	
-										default:
-											break;
-	
-									}
-	
-							}, _this.transition.delay);
-	
-					}, this.wait);
-	
-			};
-	
-	// Container: container01.
-		(function() {
+	// Icons: navbarmenu.
+		$('#navbarmenu > li:nth-child(1) > a').addEventListener(
+			'click',
+			function(event) { 
+				event.preventDefault();
+				event.stopPropagation();
+				displaynavbarlinks(xnav)
+			}
+		);
+	
+	// Buttons: navbarlinks.
+		$('#navbarlinks > li:nth-child(1) > a').addEventListener(
+			'click',
+			function(event) { 
+				displaynavbarlinks(xnav)
+			}
+		);
 		
-			var $target, $slideshowBackground;
+		$('#navbarlinks > li:nth-child(2) > a').addEventListener(
+			'click',
+			function(event) { 
+				displaynavbarlinks(xnav)
+			}
+		);
 		
-			$target = $('#container01');
+		$('#navbarlinks > li:nth-child(3) > a').addEventListener(
+			'click',
+			function(event) { 
+				displaynavbarlinks(xnav)
+			}
+		);
 		
-			$slideshowBackground = document.createElement('div');
-				$slideshowBackground.className = 'slideshow-background';
-				$target.insertBefore($slideshowBackground, $target.firstChild);
+		$('#navbarlinks > li:nth-child(4) > a').addEventListener(
+			'click',
+			function(event) { 
+				displaynavbarlinks(xnav)
+			}
+		);
 		
-			new slideshowBackground('container01', {
-				target: '#container01 > .slideshow-background',
-				wait: 0,
-				defer: true,
-				transition: {
-					style: 'crossfade',
-					speed: 1500,
-					delay: 6000,
-				},
-				images: [
-					{
-						src: 'assets/images/container01-9505ddbf.jpg',
-						position: 'center',
-						motion: 'left',
-						speed: 2,
-						caption: 'Untitled',
-					},
-					{
-						src: 'assets/images/container01-f915388b.jpg',
-						position: 'bottom',
-						motion: 'right',
-						speed: 2,
-						caption: 'Untitled',
-					},
-					{
-						src: 'assets/images/container01-7e3780a2.jpg',
-						position: 'center',
-						motion: 'down',
-						speed: 2,
-						caption: 'Untitled',
-					},
-					{
-						src: 'assets/images/container01-02b36bec.jpg',
-						position: 'center',
-						motion: 'up',
-						speed: 2,
-						caption: 'Untitled',
-					},
-				]
-			});
+		$('#navbarlinks > li:nth-child(5) > a').addEventListener(
+			'click',
+			function(event) { 
+				displaynavbarlinks(xnav)
+			}
+		);
 		
-		})();
-	
-	// "On Visible" animations.
-		onvisible.add('h1.style3, h2.style3, h3.style3, p.style3', { style: 'fade-in', speed: 1000, intensity: 5, delay: 0, replay: true });
-		onvisible.add('#image01', { style: 'fade-in', speed: 1000, intensity: 5, delay: 0, replay: false });
-		onvisible.add('#image08', { style: 'fade-in', speed: 1000, intensity: 5, delay: 0, replay: true });
+		$('#navbarlinks > li:nth-child(6) > a').addEventListener(
+			'click',
+			function(event) { 
+				displaynavbarlinks(xnav)
+			}
+		);
 
 })();
